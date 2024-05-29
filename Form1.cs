@@ -43,6 +43,7 @@ namespace mome
         private void pictureBox1_Click(object sender, EventArgs e) { }
         private void button1_Click(object sender, EventArgs e)
         {
+            ckhide.Checked = true;
             OpenFileDialog ofd = new OpenFileDialog();
             if (ofd.ShowDialog() == DialogResult.OK)
             {
@@ -57,7 +58,7 @@ namespace mome
                 txt1.Clear();
                 txt1.AppendText(ocr.Replace("\n", "\r\n") + "\r\n");
 
-                ckhide.Checked = true;
+                
             }
         }
         public string OCRprocess(Bitmap oc)
@@ -173,6 +174,7 @@ namespace mome
         //pdf 파일 업로드 버튼 
         private void button2_Click(object sender, EventArgs e)
         {
+            ckhide.Checked = true;
             OpenFileDialog openFileDialg = new OpenFileDialog();
             openFileDialg.Filter = "PDF files (*.pdf)|*.pdf|All files (*.*)|*.*";
             if(openFileDialg.ShowDialog() == DialogResult.OK)
@@ -180,8 +182,6 @@ namespace mome
                 string pdfPath = openFileDialg.FileName;
                 string ocrText = ExtractTextFromPdf(pdfPath);
                 txt1.Text = ocrText;
-
-                ckhide.Checked = true;
             }
         }
 
