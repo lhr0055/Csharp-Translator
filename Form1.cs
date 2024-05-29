@@ -94,7 +94,7 @@ namespace mome
         {
             TranslateService ts = new TranslateService(new BaseClientService.Initializer()
             {
-                ApiKey = "AIzaSyAd4kYy0DoY9E2piz77LcXCXau6-TGPmjA",
+                ApiKey = "",
                 ApplicationName = ""
             });
             string originalString = txt1.Text;//txt1의 텍스트
