@@ -14,6 +14,7 @@ using Google.Apis.Translate.v2;
 using Google.Apis.Translate.v2.Data;
 using System.Linq.Expressions;
 using System.Net.Sockets;
+using System.Runtime.Remoting.Contexts;
 
 namespace mome
 {
@@ -41,9 +42,10 @@ namespace mome
         private void openImgToolStripMenuItem_Click(object sender, EventArgs e) { }
         private void pictureBox2_Click(object sender, EventArgs e) { }
         private void pictureBox1_Click(object sender, EventArgs e) { }
+
+        //img upload button
         private void button1_Click(object sender, EventArgs e)
         {
-            ckhide.Checked = true;
             OpenFileDialog ofd = new OpenFileDialog();
             if (ofd.ShowDialog() == DialogResult.OK)
             {
@@ -56,11 +58,69 @@ namespace mome
 
                 //텍스트박스 입력
                 txt1.Clear();
-                txt1.AppendText(ocr.Replace("\n", "\r\n") + "\r\n");
+                //txt1.AppendText(ocr.Replace("\n", "\r\n") + "\r\n");
 
-                
+                //텍스트를 줄 단위로 분할 근데 동작 안하는...
+                string[] lines = ocr.Split(new char[] { '\n' }, StringSplitOptions.RemoveEmptyEntries);
+                foreach (var line in lines)
+                {
+                    txt1.AppendText(line + Environment.NewLine);
+                }
+
+                ckhide.Checked = true;
             }
         }
+
+        //pdf file upload button 
+        private void button2_Click(object sender, EventArgs e)
+        {
+            OpenFileDialog openFileDialg = new OpenFileDialog();
+            openFileDialg.Filter = "PDF files (*.pdf)|*.pdf|All files (*.*)|*.*";
+            if (openFileDialg.ShowDialog() == DialogResult.OK)
+            {
+                string pdfPath = openFileDialg.FileName;
+                string ocrText = ExtractTextFromPdf(pdfPath);
+                txt1.Text = ocrText;
+
+                ckhide.Checked = true;
+            }
+        }
+
+        //pdf render 
+        private string ExtractTextFromPdf(string pdfPath)
+        {
+            try
+            {
+                using (var document = PdfiumViewer.PdfDocument.Load(pdfPath))
+                {
+                    txt1.Clear();
+                    string resultText = "";
+                    for (int pageIndex = 0; pageIndex < document.PageCount; pageIndex++)
+                    {
+                        using (var page = document.Render(pageIndex, 300, 300, true))
+                        {
+                            using (var bitmap = new Bitmap(page))
+                            {
+                                string ocrText = OCRprocess(bitmap);
+                                //텍스트를 줄 단위로 분할 근데 동작 안하는...
+                                string[] lines = ocrText.Split(new char[] { '\n' }, StringSplitOptions.RemoveEmptyEntries);
+                                foreach (var line in lines)
+                                {
+                                    txt1.AppendText(line + Environment.NewLine);
+                                }
+                                resultText += ocrText + "\n";
+                            }
+                        }
+                    }
+                    return resultText;
+                }
+            }
+            catch (Exception ex)
+            {
+                return "Error: " + ex.Message + "\nStack Trace: " + ex.StackTrace;
+            }
+        }
+
         public string OCRprocess(Bitmap oc)
         {
             try
@@ -77,13 +137,13 @@ namespace mome
                 //using (var engine = new Tesseract.TesseractEngine(tessdataPath, "eng", Tesseract.EngineMode.TesseractOnly))
                 using (var engine = new Tesseract.TesseractEngine(@"C:\Program Files\Tesseract-OCR\tessdata", ocrLang, Tesseract.EngineMode.Default))
                 {
-                    using(var page = engine.Process(oc))
+                    using (var page = engine.Process(oc))
                     {
                         return page.GetText();
                     }
                 }
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 return "OCR Error: " + ex.Message + "\nStack Trace: " + ex.StackTrace;
             }
@@ -130,9 +190,9 @@ namespace mome
         private void panel1_MouseHover(object sender, EventArgs e) { }
         private void ckhide_CheckedChanged(object sender, EventArgs e)
         {
-            if(ckhide.Checked) 
+            if (ckhide.Checked)
             {
-                //슬라이딩 메뉴가 접혔을 때, 메뉴 버튼의 표시 
+                //슬라이딩 메뉴가 접혔을 때, 메뉴 버튼의 표시_이미지 사이즈 조절 
                 //Image btnimg2 = Image.FromFile(@"C:\Users\KOSTA\Desktop\Project Folder\C#\img\pdf.png");
                 button2.Text = "pdf";
                 //Image btnimg1 = Image.FromFile(@"C:\Users\KOSTA\Desktop\Project Folder\C#\img\image.png");
@@ -153,7 +213,7 @@ namespace mome
 
         private void timer_Tick(object sender, EventArgs e)
         {
-            if(ckhide.Checked)
+            if (ckhide.Checked)
             {
                 //슬라이딩 메뉴 숨기는 동작
                 slide -= SLIDING;
@@ -164,59 +224,10 @@ namespace mome
             {
                 //슬라이딩 메뉴 보이는 동작 
                 slide += SLIDING;
-                if(slide >= MAX_WIDTH)
+                if (slide >= MAX_WIDTH)
                     timer.Stop();
             }
             panel.Width = slide;
-        }
-
-
-        //pdf 파일 업로드 버튼 
-        private void button2_Click(object sender, EventArgs e)
-        {
-            ckhide.Checked = true;
-            OpenFileDialog openFileDialg = new OpenFileDialog();
-            openFileDialg.Filter = "PDF files (*.pdf)|*.pdf|All files (*.*)|*.*";
-            if(openFileDialg.ShowDialog() == DialogResult.OK)
-            {
-                string pdfPath = openFileDialg.FileName;
-                string ocrText = ExtractTextFromPdf(pdfPath);
-                txt1.Text = ocrText;
-            }
-        }
-
-        //pdf 불러오기 
-        private string ExtractTextFromPdf(string pdfPath)
-        {
-            try
-            {
-                using(var document = PdfiumViewer.PdfDocument.Load(pdfPath))
-                {
-                    txt1.Clear();
-                    string resultText = "";
-                    for (int pageIndex= 0; pageIndex < document.PageCount; pageIndex++)
-                    {
-                        using(var page=document.Render(pageIndex, 300,300,true))
-                        {
-                            using (var bitmap = new Bitmap(page))
-                            {
-                                string ocrText = OCRprocess(bitmap);
-                                string[] lines = ocrText.Split(new char[] { '\n' }, StringSplitOptions.RemoveEmptyEntries);
-                                foreach(var line in lines)
-                                {
-                                    txt1.AppendText(line+Environment.NewLine);
-                                }
-                                resultText += ocrText + "\n";
-                            }
-                        }
-                    }
-                    return resultText;
-                }
-            }
-            catch (Exception ex)
-            {
-                return "Error: " + ex.Message + "\nStack Trace: " + ex.StackTrace;
-            }
         }
     }
 }
